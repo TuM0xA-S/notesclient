@@ -1,8 +1,6 @@
-package main
+package api
 
 import (
-	"encoding/json"
-	"net/http"
 	"time"
 )
 
@@ -35,13 +33,4 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at"`
 	Username  string    `json:"username"`
 	Password  string    `json:"password"`
-	Notes     []Note    `json:"-"`
-}
-
-// ExtractData ...
-func ExtractData(resp *http.Response) (*ResponseData, error) {
-	rd := &ResponseData{}
-	defer resp.Body.Close()
-	err := json.NewDecoder(resp.Body).Decode(rd)
-	return rd, err
 }
