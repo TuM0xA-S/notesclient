@@ -38,8 +38,8 @@ func (rc *RestClient) Login(u *User) error {
 }
 
 // UserDetails action
-func (rc *RestClient) UserDetails(u *User) (*User, error) {
-	resp, err := RequestWithJSON("GET", rc.Host+userURL(), u, "")
+func (rc *RestClient) UserDetails() (*User, error) {
+	resp, err := RequestWithJSON("GET", rc.Host+userURL(), nil, rc.Token)
 	if err != nil {
 		return nil, err
 	}
