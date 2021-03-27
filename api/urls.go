@@ -3,19 +3,19 @@ package api
 import "fmt"
 
 func createUserURL() string {
-	return "/api/user/create"
+	return "/api/users"
 }
 
 func loginURL() string {
-	return "/api/user/login"
+	return "/api/me"
 }
 
-func notesListURL() string {
-	return "/api/me/notes"
+func notesListURL(page int) string {
+	return fmt.Sprintf("/api/me/notes?page=%d", page)
 }
 
 func createNoteURL() string {
-	return "/api/me/notes/create"
+	return "/api/me/notes"
 }
 
 func noteURL(noteID int) string {
@@ -26,10 +26,14 @@ func userURL() string {
 	return "/api/me"
 }
 
-func publishedNotesListURL() string {
-	return "/api/notes"
+func publishedNotesListURL(page int) string {
+	return fmt.Sprintf("/api/notes?page=%d", page)
 }
 
 func publishedNoteURL(noteID int) string {
-	return fmt.Sprintf("/api/note/%d", noteID)
+	return fmt.Sprintf("/api/notes/%d", noteID)
+}
+
+func anotherUserURL(userID int) string {
+	return fmt.Sprintf("/api/users/%d", userID)
 }

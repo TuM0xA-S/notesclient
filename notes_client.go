@@ -16,17 +16,17 @@ import (
 // NotesClient represents application
 type NotesClient struct {
 	api.RestClient
-	App    fyne.App
-	Window fyne.Window
+	App                fyne.App    `json:"-"`
+	Window             fyne.Window `json:"-"`
+	Username, Password string      // from last succesfull login
 }
 
 type config struct {
 	Host     string
 	Username string
 	Password string
+	Token    string
 }
-
-var cfg = &config{}
 
 // NewNotesClient constructs notes client
 func NewNotesClient() *NotesClient {
@@ -34,12 +34,11 @@ func NewNotesClient() *NotesClient {
 	n.App = app.New()
 	f, err := os.Open("cfg.json")
 	if err == nil {
-		err := json.NewDecoder(f).Decode(cfg)
+		err := json.NewDecoder(f).Decode(n)
 		if err != nil {
 			log.Println(err)
 		}
 	}
-	n.Host = cfg.Host
 
 	n.InitializeMainWindow()
 	return n
@@ -48,6 +47,8 @@ func NewNotesClient() *NotesClient {
 //Run notes client
 func (n *NotesClient) Run() {
 	n.App.Run()
+	f, _ := os.Create("cfg.json")
+	json.NewEncoder(f).Encode(n)
 }
 
 // InitializeMainWindow creates new master window
@@ -57,10 +58,9 @@ func (n *NotesClient) InitializeMainWindow() {
 	w.Resize(fyne.NewSize(1000, 800))
 	w.SetMaster()
 	tabs := container.NewAppTabs(
-		container.NewTabItem("publications", widget.NewLabel("publications here")),
-		container.NewTabItem("my notes", widget.NewLabel("my notes here")),
-		container.NewTabItem("account", n.NewAccountWidget()),
-		container.NewTabItem("server", n.NewServerWidget()),
+		container.NewTabItem("publications", n.NewNotesListWidget(n.PublishedNotesList)),
+		container.NewTabItem("my notes", n.NewNotesListWidget(n.NotesList)),
+		container.NewTabItem("settings", container.NewVBox(n.NewAccountWidget(), n.NewServerWidget())),
 	)
 
 	w.SetContent(tabs)
@@ -77,13 +77,14 @@ func (n *NotesClient) NewServerWidget() fyne.CanvasObject {
 	c.SubmitText = "Connect"
 	c.OnSubmit = func() {
 		n.Host = e.Text
-		_, err := n.PublishedNotesList()
+		_, err := n.PublishedNotesList(1)
 		if err == nil {
-			dialog.ShowInformation("connected", "get response from a server", n.Window)
+			dialog.ShowInformation("connected", "received a responce from the server", n.Window)
 			return
 		}
 		dialog.ShowError(err, n.Window)
 	}
+	c.Refresh()
 	return c
 }
 
@@ -114,8 +115,9 @@ func (n *NotesClient) NewAccountWidget() fyne.CanvasObject {
 	loginHandler := func() {
 		passwordEntry := widget.NewEntry()
 		usernameEntry := widget.NewEntry()
-		passwordEntry.Text = cfg.Password
-		usernameEntry.Text = cfg.Username
+		passwordEntry.Text = n.Password
+		passwordEntry.Password = true
+		usernameEntry.Text = n.Username
 		fi := []*widget.FormItem{
 			{Text: "username", Widget: usernameEntry},
 			{Text: "password", Widget: passwordEntry},
@@ -131,9 +133,16 @@ func (n *NotesClient) NewAccountWidget() fyne.CanvasObject {
 				return
 			}
 			dialog.ShowInformation("logged", "now you can work with notes", n.Window)
+			n.Username = u.Username
+			n.Password = u.Password
 			updateStatus()
 		}
 		dialog.ShowForm("user data", "login", "cancel", fi, callback, n.Window)
+	}
+
+	logoutHandler := func() {
+		n.Token = ""
+		updateStatus()
 	}
 
 	res := container.NewVBox()
@@ -141,11 +150,13 @@ func (n *NotesClient) NewAccountWidget() fyne.CanvasObject {
 		user, err := n.UserDetails()
 		if err != nil {
 			res.Objects = []fyne.CanvasObject{widget.NewLabel("not logged"),
-				container.NewHBox(widget.NewButton("register", registerHandler), widget.NewButton("login", loginHandler)),
+				container.NewHBox(widget.NewButton("register", registerHandler),
+					widget.NewButton("login", loginHandler)),
 			}
 			return
 		}
-		res.Objects = []fyne.CanvasObject{widget.NewLabel("logged as " + user.Username)}
+		res.Objects = []fyne.CanvasObject{widget.NewLabel("logged as " + user.Username),
+			container.NewHBox(widget.NewButton("logout", logoutHandler))}
 	}
 	updateStatus()
 	return res

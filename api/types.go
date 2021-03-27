@@ -17,20 +17,28 @@ type ResponseData struct {
 
 // Note ...
 type Note struct {
-	ID        uint      `json:"id"`
+	ID        int       `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Title     string    `json:"title"`
 	Body      string    `json:"body"`
-	UserID    uint      `json:"user_id"`
+	UserID    int       `json:"user_id"`
 	Published bool      `json:"published"`
 }
 
 // User ...
 type User struct {
-	ID        uint      `json:"id"`
+	ID        int       `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Username  string    `json:"username"`
 	Password  string    `json:"password"`
+}
+
+// NotePatch with nullable fields
+type NotePatch struct {
+	Body      string `json:"body"`
+	Title     string `json:"title"`
+	Published bool   `json:"published"`
+	ID        int    `json:"-"`
 }

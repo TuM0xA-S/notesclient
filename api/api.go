@@ -52,8 +52,8 @@ func (rc *RestClient) UserDetails() (*User, error) {
 }
 
 // NotesList action
-func (rc *RestClient) NotesList() ([]Note, error) {
-	resp, err := RequestWithJSON("GET", rc.Host+notesListURL(), nil, rc.Token)
+func (rc *RestClient) NotesList(page int) ([]Note, error) {
+	resp, err := RequestWithJSON("GET", rc.Host+notesListURL(page), nil, rc.Token)
 	if err != nil {
 		return nil, err
 	}
@@ -107,9 +107,9 @@ func (rc *RestClient) NoteRemove(noteID int) error {
 	return ErrFrom(rd)
 }
 
-// NotePatch action
-func (rc *RestClient) NotePatch(noteID int) error {
-	resp, err := RequestWithJSON("PUT", rc.Host+noteURL(noteID), nil, rc.Token)
+// NoteUpdate action
+func (rc *RestClient) NoteUpdate(np *NotePatch) error {
+	resp, err := RequestWithJSON("PUT", rc.Host+noteURL(np.ID), np, rc.Token)
 	if err != nil {
 		return err
 	}
@@ -122,8 +122,8 @@ func (rc *RestClient) NotePatch(noteID int) error {
 }
 
 // PublishedNotesList action
-func (rc *RestClient) PublishedNotesList() ([]Note, error) {
-	resp, err := RequestWithJSON("GET", rc.Host+publishedNotesListURL(), nil, "")
+func (rc *RestClient) PublishedNotesList(page int) ([]Note, error) {
+	resp, err := RequestWithJSON("GET", rc.Host+publishedNotesListURL(page), nil, "")
 	if err != nil {
 		return nil, err
 	}
@@ -147,4 +147,18 @@ func (rc *RestClient) PublishedNoteDetails(noteID int) (*Note, error) {
 	}
 
 	return &rd.Note, ErrFrom(rd)
+}
+
+// AnotherUserDetails ...
+func (rc *RestClient) AnotherUserDetails(userID int) (*User, error) {
+	resp, err := RequestWithJSON("GET", rc.Host+anotherUserURL(userID), nil, "")
+	if err != nil {
+		return nil, err
+	}
+	rd, err := ExtractData(resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &rd.User, ErrFrom(rd)
 }
